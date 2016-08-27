@@ -10,7 +10,10 @@ import env from './env';
 import Spotify from './helpers/spotify'
 
 console.log('Loaded environment variables:', env);
+
 console.log(Spotify);
+Spotify.onAny((event, value) => { console.log(`${event}`); });
+
 
 var app = remote.app;
 var appDir = jetpack.cwd(app.getAppPath());

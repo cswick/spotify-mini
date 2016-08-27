@@ -1,18 +1,28 @@
 import * as async from 'async';
 import * as request from 'request-promise';
 import * as P from 'bluebird';
-import * as EventEmitter from 'events';
+import { EventEmitter2 } from 'eventemitter2';
+// todo: modular lodash
+import * as _ from 'lodash';
 
 const ERR_NO_PORTS = 1;
 const ERR_AUTH_TOKEN = 2;
 const ERR_CSRF_TOKEN = 3;
+const ACTION_TYPES = {
+  READY: 'READY',
+  TRACK_CHANGE: 'TRACK_CHANGE',
+  PLAY: 'PLAY',
+  END: 'END',
+  PAUSE: 'PAUSE',
+  ERROR: 'ERROR'
+}
 
 class Internal {
+  // todo: add retry logic
   static init() {
     return P.join(Internal.getAuth(), Internal.probePorts(), (auth, port) => {
       return Internal.csrf(port).then((csrf) => {
         return { port: port, oauth: auth, csrf: csrf };
-        //Internal.getLocal({ url: '/remote/status.json' }, { csrf: true, oauth: true, wait: true }, (err, res, body) => { console.log(body); });
       }).catch((err) => {
         return { reason: 'csrf error', err: err };
       });
@@ -43,6 +53,7 @@ class Internal {
   }
 
   static getLocal(requestOpts, localOpts) {
+    if (!localOpts.port) console.trace();
     requestOpts = Object.assign({json: true, rejectUnauthorized: false, simple: true, transform2xxOnly: true, timeout: 500}, requestOpts);
     requestOpts.headers = Object.assign({ 'Origin': 'https://open.spotify.com' }, requestOpts.headers);
     localOpts = Object.assign({ oauth: false, cfid: false, wait: false, port: null }, localOpts);
@@ -59,14 +70,12 @@ class Internal {
       let ports = [4370, 4371, 4372, 4373, 4374, 4375, 4376, 4377, 4378, 4379];
       let httpGet = function(port, cb) {
        return Internal.getLocal({ url: '/service/version.json' }, { port: port }).then((res) => {
-         console.warn(`suc ${port}`);
          resolve(port);
          return;
        }).catch((err) => {
          errCount++;
          if (errCount === ports.length) {
            reject({ code: ERR_NO_PORTS, err: '' });
-           //throw { code: ERR_NO_PORTS, err: '' };
          }
          return;
        })
@@ -87,24 +96,68 @@ class Internal {
     });
   }
 
+  static ifReady(context, callback) {
+    if (!context._ready) {
+      return new P((resolve, reject) => {
+        context.on(ACTION_TYPES.READY, () => {
+          resolve(callback());
+        });
+      });
+    }
+    return callback();
+  }
+
+  static compare(context: EventEmitter2, prevStatus: SpotifyStatus, curStatus: SpotifyStatus) {
+    let path = 'track.track_resource.uri'
+    if (_.get(prevStatus, path) !== _.get(curStatus, path)) context.emit(ACTION_TYPES.TRACK_CHANGE, curStatus);
+    if (prevStatus.playing !== curStatus.playing) {
+      if (curStatus.playing) {
+        context.emit(ACTION_TYPES.PLAY, curStatus);
+        // update current time loop
+      } else {
+        if (Math.abs(curStatus.playing_position - curStatus.track.length) <= 1) {
+          context.emit(ACTION_TYPES.END, curStatus);
+        }
+        context.emit(ACTION_TYPES.PAUSE, curStatus);
+        // stop current time loop
+      }
+    }
+  }
+
 }
 
-class Spotify {
+class Spotify extends EventEmitter2 {
 
-  _port;
-  _oauth;
-  _csrf;
+  _status: SpotifyStatus;
+  _secrets: any = {};
+  _ready: boolean;
 
-  constructor() {
-    let x = Internal.init().then((info: any) => {
+  constructor(options?) {
+    super();
+    Internal.init().then((info: any) => {
       if (info.err) {
         console.error(info.reason);
         console.error(info.err);
       } else {
-        this._port = info.port;
-        this._oauth = info.oauth;
-        this._csrf = info.csrf;
+        this._secrets = info;
+        this._ready = true;
       }
+    }).then(() => {
+      return this.status();
+    }).then((res) => {
+      console.log('set status');
+      this._status = res;
+      this.emit(ACTION_TYPES.READY, null);
+    }).then(() => {
+      console.log('poll status');
+      let pollStatus = () => {
+        return this.status(true).then((res) => {
+          Internal.compare(this, this._status, res);
+          this._status = res;
+          pollStatus();
+        });
+      };
+      pollStatus();
     }).catch((err) => {
       console.error(err);
     });
@@ -114,14 +167,17 @@ class Spotify {
   pause() {}
   play() {}
   seekTo() {}
-  status() {}
+  status(longPoll?) {
+    let getStatus = () => {
+      let options = Object.assign({}, this._secrets, { wait: longPoll });
+      return Internal.getLocal({ url: '/remote/status.json', timeout: 0 }, options).then((res) => {
+        return res;
+      });
+    };
+    return Internal.ifReady(this, getStatus);
+  }
 
-  // error
-  // ready
-  // end
-  // play
-  // pause
-  // track-change
+
 
 }
 
