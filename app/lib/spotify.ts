@@ -53,14 +53,15 @@ class Internal {
   }
 
   static getLocal(requestOpts, localOpts) {
-    if (!localOpts.port) console.trace();
     requestOpts = Object.assign({json: true, rejectUnauthorized: false, simple: true, transform2xxOnly: true, timeout: 500}, requestOpts);
     requestOpts.headers = Object.assign({ 'Origin': 'https://open.spotify.com' }, requestOpts.headers);
     localOpts = Object.assign({ oauth: false, cfid: false, wait: false, port: null }, localOpts);
     requestOpts.url = `https://mini.spotilocal.com:${localOpts.port}${requestOpts.url}?service=remote&cors=&ref=https://open.spotify.com`;
     if (localOpts.oauth) requestOpts.url += `&oauth=${localOpts.oauth}`;
     if (localOpts.csrf) requestOpts.url += `&csrf=${localOpts.csrf}`;
-    if (localOpts.wait) requestOpts.url += '&returnon=login,logout,play,pause,error,ap&returnafter=60';
+    if (localOpts.wait) requestOpts.url += `&returnon=login,logout,play,pause,error,ap&returnafter=60`
+    if (typeof localOpts.pause !== 'undefined') requestOpts.url += `&pause=${localOpts.pause}`;
+    if (localOpts.uri) requestOpts.url += `&uri=${localOpts.uri}`;
     return request(requestOpts);
   }
 
@@ -128,12 +129,33 @@ class Internal {
 
 class Spotify extends EventEmitter2 {
 
-  _status: SpotifyStatus;
-  _secrets: any = {};
-  _ready: boolean;
+  status: SpotifyStatus;
+  _secrets = {};
+  _ready = false;
 
   constructor(options?) {
     super();
+
+    let _positionInterval = null;
+
+    let trackPosition = () => {
+      _positionInterval = setInterval(() => {
+        this.status.playing_position += 0.25;
+      }, 250);
+    }
+
+    let clearTrackPosition = () => {
+      clearInterval(_positionInterval);
+    }
+
+    let status = (longPoll?: boolean) => {
+      let getStatus = () => {
+        let options = Object.assign({}, this._secrets, { wait: longPoll });
+        return Internal.getLocal({ url: '/remote/status.json', timeout: 0 }, options);
+      };
+      return Internal.ifReady(this, getStatus);
+    }
+
     Internal.init().then((info: any) => {
       if (info.err) {
         console.error(info.reason);
@@ -143,17 +165,16 @@ class Spotify extends EventEmitter2 {
         this._ready = true;
       }
     }).then(() => {
-      return this.status();
+      return status();
     }).then((res) => {
-      console.log('set status');
-      this._status = res;
+      this.status = res;
       this.emit(ACTION_TYPES.READY, null);
+      if (this.status.playing) trackPosition();
     }).then(() => {
-      console.log('poll status');
       let pollStatus = () => {
-        return this.status(true).then((res) => {
-          Internal.compare(this, this._status, res);
-          this._status = res;
+        return status(true).then((res) => {
+          Internal.compare(this, this.status, res);
+          this.status = res;
           pollStatus();
         });
       };
@@ -161,23 +182,52 @@ class Spotify extends EventEmitter2 {
     }).catch((err) => {
       console.error(err);
     });
+
+    this.on(ACTION_TYPES.PAUSE, () => { clearTrackPosition(); });
+    this.on(ACTION_TYPES.END, () => { clearTrackPosition(); });
+    this.on(ACTION_TYPES.PLAY, () => { trackPosition(); });
     // ensure running
   }
 
-  pause() {}
-  play() {}
-  seekTo() {}
-  status(longPoll?) {
-    let getStatus = () => {
-      let options = Object.assign({}, this._secrets, { wait: longPoll });
-      return Internal.getLocal({ url: '/remote/status.json', timeout: 0 }, options).then((res) => {
-        return res;
-      });
+  pause(unpause = false) {
+    let pause = () => {
+      let options = Object.assign({}, this._secrets, { pause: !unpause });
+      return Internal.getLocal({ url: '/remote/pause.json', timeout: 0 }, options);
     };
-    return Internal.ifReady(this, getStatus);
+    return Internal.ifReady(this, pause);
   }
 
+  play(uri?: string) {
+    if (!uri) return this.pause(true);
+    let play = () => {
+      let options = Object.assign({}, this._secrets, { uri: uri });
+      return Internal.getLocal({ url: '/remote/play.json', timeout: 0 }, options);
+    };
+    return Internal.ifReady(this, play);
+  }
 
+  // it seems that this is broken/removed
+  // seekTo(seconds: number) {
+  //   let seekTo = () => {
+  //     let position = Internal.formatPlayPosition(seconds);
+  //     let curTrack = _.get(this._status, 'track.track_resource.uri');
+  //     let options = Object.assign({}, this._secrets, { uri: `${curTrack}#${position}` });
+  //     console.log(options.uri);
+  //     return Internal.getLocal({ url: '/remote/play.json', timeout: 0 }, options);
+  //   };
+  //   return Internal.ifReady(this, seekTo);
+  // }
+
+  getPosition() {
+    return Spotify.formatPlayPosition(this.status.playing_position);
+  }
+
+  static formatPlayPosition(timeInSeconds) {
+    let minutes = Math.floor(timeInSeconds / 60);
+    let seconds = (timeInSeconds % 60).toFixed(3);
+    if (seconds.length === 1) seconds = `0${seconds}`;
+    return `${minutes}:${seconds}`;
+  }
 
 }
 
