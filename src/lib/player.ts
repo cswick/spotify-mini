@@ -1,4 +1,5 @@
-import Spotify from './spotify'
+import Spotify from './spotify';
+import robot from 'robotjs';
 
 // setTimeout(function() {
 //   Spotify.pause().then(function(res) { console.log(res); }).catch(function(err) { console.error(err); });
@@ -30,7 +31,11 @@ class Player {
         Spotify.play();
         e.target.id = 'pause';
         break;
+      case 'prev':
+        robot.keyTap('audio_prev');
+        break;
       case 'next':
+        robot.keyTap('audio_next');
         break;
       case 'pause':
         Spotify.pause();
