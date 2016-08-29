@@ -1,0 +1,11 @@
+const ACTION_TYPES = {
+  READY: 'READY',
+  TRACK_CHANGE: 'TRACK_CHANGE',
+  PLAY: 'PLAY',
+  END: 'END',
+  PAUSE: 'PAUSE',
+  ERROR: 'ERROR',
+  ART_UPDATE: 'ART_UPDATE'
+}
+
+export default ACTION_TYPES;

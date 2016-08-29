@@ -11,12 +11,14 @@ var utils = require('./utils');
 
 var projectDir = jetpack;
 var srcDir = jetpack.cwd('./src');
+var libDir = jetpack.cwd('./src/lib');
 var destDir = jetpack.cwd('./app');
 
 gulp.task('bundle', function () {
     return Promise.all([
         bundle(srcDir.path('background.js'), destDir.path('background.js')),
         bundle(srcDir.path('app.js'), destDir.path('app.js')),
+        bundle(libDir.path('preload.js'), destDir.path('preload.js')),
     ]);
 });
 
@@ -29,6 +31,7 @@ gulp.task('less', function () {
 
 gulp.task('environment', function () {
     var configFile = 'config/env_' + utils.getEnvName() + '.json';
+    console.log(utils.getEnvName());
     projectDir.copy(configFile, destDir.path('env.json'), { overwrite: true });
 });
 

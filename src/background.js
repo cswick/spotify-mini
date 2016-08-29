@@ -7,6 +7,8 @@ import { app, Menu } from 'electron';
 import { devMenuTemplate } from './menu/dev_menu_template';
 import { editMenuTemplate } from './menu/edit_menu_template';
 import createWindow from './helpers/window';
+import getThemeSettings from './helpers/theme';
+import { ipcMain } from 'electron';
 
 // Special module holding environment variables which you declared
 // in config/env_xxx.json file.
@@ -32,13 +34,19 @@ if (env.name !== 'production') {
 
 app.on('ready', function () {
     setApplicationMenu();
+    var currentTheme = getThemeSettings();
 
-    var mainWindow = createWindow('main', {
-        width: 1000,
-        height: 600
+    ipcMain.on('get-theme-settings', (event, arg) => {
+      event.returnValue = currentTheme;
     });
 
-    mainWindow.loadURL('file://' + __dirname + '/app.html');
+    var mainWindow = createWindow('main', {
+        width: currentTheme.settings.BTWindowWidth,
+        height: currentTheme.settings.BTWindowHeight,
+        webPreferences: { preload:  `${__dirname}/preload.js` }
+    });
+
+    mainWindow.loadURL(`file://${currentTheme.path}/${currentTheme.settings.BTMainFile}`);
 
     if (env.name === 'development') {
         mainWindow.openDevTools();

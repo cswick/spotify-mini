@@ -1,9 +1,5 @@
-interface FsJetpack {
-  cwd(...args): any;
-}
-
-declare var fsJetpack: FsJetpack;
-
 declare module "fs-jetpack" {
-    export = fsJetpack;
+    export default class jetpack {
+      static cwd(...args);
+    }
 }

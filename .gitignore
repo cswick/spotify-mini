@@ -10,8 +10,12 @@ Thumbs.db
 /app/background.js
 /app/env.json
 /app/**/*.map
+/app/preload.js
 
 /dist
+
+/helpers/*.js
+/helpers/*.js.map
 
 # typescript only for this dir
 src/lib/*.js

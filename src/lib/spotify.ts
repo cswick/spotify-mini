@@ -4,18 +4,11 @@ import * as P from 'bluebird';
 import { EventEmitter2 } from 'eventemitter2';
 // todo: modular lodash
 import * as _ from 'lodash';
+import ActionTypes from './ActionTypes';
 
 const ERR_NO_PORTS = 1;
 const ERR_AUTH_TOKEN = 2;
 const ERR_CSRF_TOKEN = 3;
-const ACTION_TYPES = {
-  READY: 'READY',
-  TRACK_CHANGE: 'TRACK_CHANGE',
-  PLAY: 'PLAY',
-  END: 'END',
-  PAUSE: 'PAUSE',
-  ERROR: 'ERROR'
-}
 
 class Internal {
   // todo: add retry logic
@@ -65,6 +58,22 @@ class Internal {
     return request(requestOpts);
   }
 
+  static getArtUrl(status: SpotifyStatus) {
+    let trackUri = _.get(status, 'track.track_resource.uri').toString();
+    trackUri = trackUri && trackUri.length ? trackUri.replace('spotify:track:', '') : '';
+    return request({
+      url: `https://api.spotify.com/v1/tracks/${trackUri}`,
+      json: true,
+      simple: true,
+      transform2xxOnly: true,
+      transform: (body) => {
+        return _.get(body, 'album.images[0].url');
+      }
+    }).catch((err) => {
+      console.error('artwork error');
+    });
+  }
+
   static probePorts() {
     return new P((resolve, reject) => {
       let errCount = 0;
@@ -100,7 +109,7 @@ class Internal {
   static ifReady(context, callback) {
     if (!context._ready) {
       return new P((resolve, reject) => {
-        context.on(ACTION_TYPES.READY, () => {
+        context.on(ActionTypes.READY, () => {
           resolve(callback());
         });
       });
@@ -110,18 +119,24 @@ class Internal {
 
   static compare(context: EventEmitter2, prevStatus: SpotifyStatus, curStatus: SpotifyStatus) {
     let path = 'track.track_resource.uri'
-    if (_.get(prevStatus, path) !== _.get(curStatus, path)) context.emit(ACTION_TYPES.TRACK_CHANGE, curStatus);
+    if (_.get(prevStatus, path) !== _.get(curStatus, path)) {
+      context.emit(ActionTypes.TRACK_CHANGE, curStatus);
+    }
     if (prevStatus.playing !== curStatus.playing) {
       if (curStatus.playing) {
-        context.emit(ACTION_TYPES.PLAY, curStatus);
-        // update current time loop
+        context.emit(ActionTypes.PLAY, curStatus);
       } else {
         if (Math.abs(curStatus.playing_position - curStatus.track.length) <= 1) {
-          context.emit(ACTION_TYPES.END, curStatus);
+          context.emit(ActionTypes.END, curStatus);
         }
-        context.emit(ACTION_TYPES.PAUSE, curStatus);
-        // stop current time loop
+        context.emit(ActionTypes.PAUSE, curStatus);
       }
+    }
+  }
+
+  static compareArt(context: EventEmitter2, prevArt, curArt) {
+    if (curArt !== prevArt) {
+      context.emit(ActionTypes.ART_UPDATE, curArt);
     }
   }
 
@@ -130,6 +145,7 @@ class Internal {
 class Spotify extends EventEmitter2 {
 
   status: SpotifyStatus;
+  artworkUrl: string;
   _secrets = {};
   _ready = false;
 
@@ -156,6 +172,12 @@ class Spotify extends EventEmitter2 {
       return Internal.ifReady(this, getStatus);
     }
 
+    let compareArt = (artUrl) => {
+      let prevArt = this.artworkUrl;
+      this.artworkUrl = artUrl;
+      Internal.compareArt(this, prevArt, artUrl);
+    }
+
     Internal.init().then((info: any) => {
       if (info.err) {
         console.error(info.reason);
@@ -168,13 +190,16 @@ class Spotify extends EventEmitter2 {
       return status();
     }).then((res) => {
       this.status = res;
-      this.emit(ACTION_TYPES.READY, null);
+      Internal.getArtUrl(this.status).then(compareArt);
+      this.emit(ActionTypes.READY, null);
       if (this.status.playing) trackPosition();
     }).then(() => {
       let pollStatus = () => {
         return status(true).then((res) => {
-          Internal.compare(this, this.status, res);
+          let prevStatus = this.status;
           this.status = res;
+          Internal.getArtUrl(this.status).then(compareArt);
+          Internal.compare(this, prevStatus, this.status);
           pollStatus();
         });
       };
@@ -183,9 +208,9 @@ class Spotify extends EventEmitter2 {
       console.error(err);
     });
 
-    this.on(ACTION_TYPES.PAUSE, () => { clearTrackPosition(); });
-    this.on(ACTION_TYPES.END, () => { clearTrackPosition(); });
-    this.on(ACTION_TYPES.PLAY, () => { trackPosition(); });
+    this.on(ActionTypes.PAUSE, () => { clearTrackPosition(); });
+    this.on(ActionTypes.END, () => { clearTrackPosition(); });
+    this.on(ActionTypes.PLAY, () => { trackPosition(); });
     // ensure running
   }
 
@@ -204,6 +229,10 @@ class Spotify extends EventEmitter2 {
       return Internal.getLocal({ url: '/remote/play.json', timeout: 0 }, options);
     };
     return Internal.ifReady(this, play);
+  }
+
+  togglePlayPause() {
+    this.pause(!this.status.playing);
   }
 
   // it seems that this is broken/removed
