@@ -14,8 +14,8 @@ Thumbs.db
 
 /dist
 
-/helpers/*.js
-/helpers/*.js.map
+src/helpers/*.js
+src/helpers/*.js.map
 
 # typescript only for this dir
 src/lib/*.js

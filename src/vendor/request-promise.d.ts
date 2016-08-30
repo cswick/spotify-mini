@@ -3,8 +3,8 @@
 // Definitions by: Christopher Glantschnig <https://github.com/cglantschnig/>, Joe Skeen <http://github.com/joeskeen>, Aya Morisawa <https://github.com/AyaMorisawa>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
-/// <reference path="../request/request.d.ts" />
-/// <reference path="../bluebird/bluebird.d.ts" />
+/// <reference path="./request.d.ts" />
+/// <reference path="./bluebird.d.ts" />
 
 declare module 'request-promise' {
     import request = require('request');
@@ -28,6 +28,7 @@ declare module 'request-promise' {
         interface RequestPromiseOptions extends request.CoreOptions {
             simple?: boolean;
             transform?: (body: any, response: http.IncomingMessage, resolveWithFullResponse?: boolean) => any;
+            transform2xxOnly?: boolean;
             resolveWithFullResponse?: boolean;
         }
 

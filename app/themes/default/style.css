@@ -12,6 +12,7 @@ body {
 	text-align: center;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	-webkit-user-select: none;
 }
 img {
 	display: block;

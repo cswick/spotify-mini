@@ -22,3 +22,5 @@ export var devMenuTemplate = {
         }
     }]
 };
+
+export default devMenuTemplate;

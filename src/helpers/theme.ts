@@ -6,18 +6,19 @@
 import { app, BrowserWindow, screen } from 'electron';
 import jetpack from 'fs-jetpack';
 import plist from 'simple-plist';
+import * as path from 'path';
 
 export default function () {
 
     let userDataDir = jetpack.cwd(app.getPath('userData'));
     let stateStoreFile = 'theme.json';
     let defaultTheme = {
-        path: `${app.getAppPath()}/themes`,
+        path: `${app.getAppPath()}${path.sep}themes`,
         name: 'default'
     };
     let selectedTheme = defaultTheme;
-    let themePath = `${selectedTheme.path}/${selectedTheme.name}`;
-    let themeSettingsPath = `${themePath}/Info.plist`;
+    let themePath = `${selectedTheme.path}${path.sep}${selectedTheme.name}`;
+    let themeSettingsPath = `${themePath}${path.sep}Info.plist`;
     let themeSettings: BowtiePlist = plist.readFileSync(themeSettingsPath);
 
     return {

@@ -1,3 +1,5 @@
+import { remote } from 'electron';
+
 export default class Bowtie implements Bowtie {
   constructor(options?) {
 
@@ -8,9 +10,9 @@ export default class Bowtie implements Bowtie {
   chooseRemote() {};
   connectedRemote() {};
   currentFrame() {
-    // An array representing the frame of the window, in the order:
-    // [x-offset, y-offset, width, height].
-    return [0,0,0,0]
+    let bounds = remote.getCurrentWindow().getBounds();
+    let screen = remote.screen.getPrimaryDisplay();
+    return [bounds.x, screen.size.height - bounds.y, bounds.width, bounds.height];
   };
   frame() {
     return this.currentFrame();
@@ -20,7 +22,10 @@ export default class Bowtie implements Bowtie {
   log() {};
   orientation() {};
   preferenceForKey() {};
-  setFrame() {};
+  setFrame(x, y, width, height) {
+    let screen = remote.screen.getPrimaryDisplay();
+    remote.getCurrentWindow().setPosition(x, screen.size.height - y, true);
+  };
   setPreferenceForKey() {};
   version() {};
 

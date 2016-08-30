@@ -10,3 +10,6 @@ export var editMenuTemplate = {
         { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
     ]
 };
+
+
+export default editMenuTemplate;

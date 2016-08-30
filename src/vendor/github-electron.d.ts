@@ -3,8 +3,6 @@
 // Definitions by: jedmao <https://github.com/jedmao/>, rhysd <https://rhysd.github.io>, Milan Burda <https://github.com/miniak/>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
-/// <reference path="../node/node.d.ts" />
-
 declare namespace Electron {
 
 	class EventEmitter implements NodeJS.EventEmitter {
@@ -1210,6 +1208,10 @@ declare namespace Electron {
 		 * @returns All child windows.
 		 */
 		getChildWindows(): BrowserWindow[];
+		/**
+		 * Show/hide chrome dev tools
+		 */
+		toggleDevTools(): BrowserWindow;
 	}
 
 	type SwipeDirection = 'up' | 'right' | 'down' | 'left';

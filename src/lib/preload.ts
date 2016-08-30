@@ -1,8 +1,8 @@
 import Player from './player';
 import Bowtie from './Bowtie';
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, BrowserWindow } from 'electron';
 
-declare var process, global;
+declare var process, global, document;
 
 process.once('loaded', () => {
   let themeConfig = ipcRenderer.sendSync('get-theme-settings');
