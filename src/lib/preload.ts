@@ -1,6 +1,7 @@
-import Player from './player';
+import Player from './Player';
 import Bowtie from './Bowtie';
-import { ipcRenderer, BrowserWindow } from 'electron';
+import { remote, ipcRenderer, BrowserWindow } from 'electron';
+import menu from '../helpers/context-menu';
 
 declare var process, global, document;
 
@@ -12,4 +13,10 @@ process.once('loaded', () => {
   global.iTunes = player;
   global.Player = player;
   global.Bowtie = bowtie;
+  global.onload = () => {
+    global.document.body.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      menu.popup(remote.getCurrentWindow());
+    });
+  };
 });
