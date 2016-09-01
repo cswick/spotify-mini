@@ -16,6 +16,10 @@ import * as path from 'path';
 import env from './env';
 
 var mainWindow;
+var currentTheme = getThemeSettings();
+ipcMain.on('get-theme-settings', (event, arg) => {
+  event.returnValue = currentTheme;
+});
 
 var setApplicationMenu = function () {
     var menus: any = [editMenuTemplate];
@@ -35,24 +39,14 @@ if (env.name !== 'production') {
 
 app.on('ready', function () {
     setApplicationMenu();
-    var currentTheme = getThemeSettings();
-
-    ipcMain.on('get-theme-settings', (event, arg) => {
-      event.returnValue = currentTheme;
-    });
 
     var windowOptions = Object.assign({}, {
       width: currentTheme.settings.BTWindowWidth,
       height: currentTheme.settings.BTWindowHeight,
-      transparent: true,
       webPreferences: { preload:  path.resolve(`${__dirname}/preload.js`) }
     }, env.windowProperties)
 
     var mainWindow = createWindow('main', windowOptions);
-
-    ipcMain.on('get-theme-settings', (event, arg) => {
-      event.returnValue = currentTheme;
-    });
 
     mainWindow.loadURL(`file://${currentTheme.path}/${currentTheme.settings.BTMainFile}`);
 

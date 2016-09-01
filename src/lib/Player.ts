@@ -1,4 +1,4 @@
-import Spotify from './spotify';
+import Spotify from './Spotify';
 import robot from 'robotjs';
 import ActionTypes from './ActionTypes';
 import BTWrapper from './BTWrapper';

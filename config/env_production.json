@@ -2,6 +2,8 @@
   "name": "production",
   "description": "Add here any environment specific stuff you like.",
   "windowProperties": {
-    "frame": false
+    "frame": false,
+    "transparent": true,
+    "resizable": false
   }
 }

@@ -2,6 +2,7 @@ import Player from './Player';
 import Bowtie from './Bowtie';
 import { remote, ipcRenderer, BrowserWindow } from 'electron';
 import menu from '../helpers/context-menu';
+import handleScroll from '../helpers/zoom';
 
 declare var process, global, document;
 
@@ -17,6 +18,10 @@ process.once('loaded', () => {
     global.document.body.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       menu.popup(remote.getCurrentWindow());
+    });
+    global.document.body.addEventListener('mousewheel', (e) => {
+      e.preventDefault();
+      handleScroll(e);
     });
   };
 });
