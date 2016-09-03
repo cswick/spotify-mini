@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, remote } from 'electron';
 
 export var devMenuTemplate = {
     label: 'Development',
@@ -6,19 +6,13 @@ export var devMenuTemplate = {
         label: 'Reload',
         accelerator: 'CmdOrCtrl+R',
         click: function () {
-            BrowserWindow.getFocusedWindow().webContents.reloadIgnoringCache();
+            remote.getCurrentWindow().webContents.reloadIgnoringCache();
         }
     },{
         label: 'Toggle DevTools',
         accelerator: 'Alt+CmdOrCtrl+I',
         click: function () {
-            BrowserWindow.getFocusedWindow().toggleDevTools();
-        }
-    },{
-        label: 'Quit',
-        accelerator: 'CmdOrCtrl+Q',
-        click: function () {
-            app.quit();
+            remote.getCurrentWindow().toggleDevTools();
         }
     }]
 };

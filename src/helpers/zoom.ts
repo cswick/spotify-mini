@@ -1,4 +1,5 @@
 import { remote, webFrame } from 'electron';
+import env from '../env';
 
 declare var global: Window;
 
@@ -14,6 +15,10 @@ export var handleScroll = (e: MouseWheelEvent) => {
       container.style.overflow = 'auto';
       let newWidth = Math.round(container.offsetWidth * newZoom);
       let newHeight = Math.round(container.offsetHeight * newZoom);
+      if (env.name === 'development') {
+        newHeight += 75;
+        newWidth += 25;
+      }
       container.style.overflow = originalOverflow;
       remote.getCurrentWindow().setSize(newWidth, newHeight, false);
     }

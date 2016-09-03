@@ -1,7 +1,7 @@
 import Player from './Player';
 import Bowtie from './Bowtie';
 import { remote, ipcRenderer, BrowserWindow } from 'electron';
-import menu from '../helpers/context-menu';
+import menu from '../menu/context-menu';
 import handleScroll from '../helpers/zoom';
 
 declare var process, global, document;

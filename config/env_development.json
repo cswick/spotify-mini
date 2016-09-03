@@ -1,4 +1,11 @@
 {
   "name": "development",
-  "description": "Add here any environment specific stuff you like."
+  "description": "Add here any environment specific stuff you like.",
+  "windowProperties": {
+    "alwaysOnTop": true,
+    "minimizable": false,
+    "maximizable": false,
+    "skipTaskbar": false,
+    "titleBarStyle": "hidden"
+  }
 }

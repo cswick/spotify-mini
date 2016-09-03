@@ -3,31 +3,23 @@
 // It doesn't have any windows which you can see on screen, but we can open
 // window from here.
 
-import { app, Menu } from 'electron';
-import { devMenuTemplate } from './menu/dev_menu_template';
-import { editMenuTemplate } from './menu/edit_menu_template';
+import { app, Menu, Tray } from 'electron';
 import createWindow from './helpers/window';
 import getThemeSettings from './helpers/theme';
 import { ipcMain } from 'electron';
 import * as path from 'path';
+import trayMenu from './menu/tray-menu';
 
 // Special module holding environment variables which you declared
 // in config/env_xxx.json file.
 import env from './env';
 
-var mainWindow;
-var currentTheme = getThemeSettings();
+let mainWindow = null;
+let tray = null;
+let currentTheme = getThemeSettings();
 ipcMain.on('get-theme-settings', (event, arg) => {
   event.returnValue = currentTheme;
 });
-
-var setApplicationMenu = function () {
-    var menus: any = [editMenuTemplate];
-    if (env.name !== 'production') {
-        menus.push(devMenuTemplate);
-    }
-    Menu.setApplicationMenu(Menu.buildFromTemplate(menus));
-};
 
 // Save userData in separate folders for each environment.
 // Thanks to this you can use production and development versions of the app
@@ -38,7 +30,9 @@ if (env.name !== 'production') {
 }
 
 app.on('ready', function () {
-    setApplicationMenu();
+    Menu.setApplicationMenu(null);
+
+    tray = new Tray(path.normalize(`${__dirname}/../resources/windows/icon.ico`));
 
     var windowOptions = Object.assign({}, {
       width: currentTheme.settings.BTWindowWidth,
@@ -49,6 +43,8 @@ app.on('ready', function () {
     var mainWindow = createWindow('main', windowOptions);
 
     mainWindow.loadURL(`file://${currentTheme.path}/${currentTheme.settings.BTMainFile}`);
+
+    tray.setContextMenu(trayMenu);
 
     if (env.name === 'development') {
         mainWindow.openDevTools();

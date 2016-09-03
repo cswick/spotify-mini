@@ -2,8 +2,12 @@
   "name": "production",
   "description": "Add here any environment specific stuff you like.",
   "windowProperties": {
+    "alwaysOnTop": true,
     "frame": false,
-    "transparent": true,
-    "resizable": false
+    "minimizable": false,
+    "maximizable": false,
+    "resizable": false,
+    "skipTaskbar": true,
+    "transparent": true
   }
 }
