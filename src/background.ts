@@ -32,7 +32,8 @@ if (env.name !== 'production') {
 app.on('ready', function () {
     Menu.setApplicationMenu(null);
 
-    tray = new Tray(path.normalize(`${__dirname}/../resources/windows/icon.ico`));
+    let iconPath = process.platform === 'win32' ? '/../resources/windows/icon.ico' : '/../resources/icons/512x512.png';
+    tray = new Tray(path.normalize(`${__dirname}${iconPath}`));
 
     var windowOptions = Object.assign({}, {
       width: currentTheme.settings.BTWindowWidth,

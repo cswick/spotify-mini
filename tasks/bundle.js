@@ -3,6 +3,7 @@
 var path = require('path');
 var jetpack = require('fs-jetpack');
 var rollup = require('rollup').rollup;
+var ts = require('rollup-plugin-typescript');
 
 var nodeBuiltInModules = ['assert', 'buffer', 'child_process', 'cluster',
     'console', 'constants', 'crypto', 'dgram', 'dns', 'domain', 'events',
@@ -28,6 +29,7 @@ module.exports = function (src, dest) {
         entry: src,
         external: generateExternalModulesList(),
         cache: cached[src],
+        plugins: [ts()],
     })
     .then(function (bundle) {
         cached[src] = bundle;
