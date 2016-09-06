@@ -29,10 +29,13 @@ if (env.name !== 'production') {
     app.setPath('userData', userDataPath + ' (' + env.name + ')');
 }
 
+app.dock.hide();
+
 app.on('ready', function () {
+
     Menu.setApplicationMenu(null);
 
-    let iconPath = process.platform === 'win32' ? '/../resources/windows/icon.ico' : '/../resources/icons/512x512.png';
+    let iconPath = process.platform === 'win32' ? '/../resources/windows/icon.ico' : '/../resources/icons/trayTemplate.png';
     tray = new Tray(path.normalize(`${__dirname}${iconPath}`));
 
     var windowOptions = Object.assign({}, {
