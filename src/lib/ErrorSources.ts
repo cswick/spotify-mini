@@ -1,0 +1,6 @@
+const ERROR_SOURCES = {
+  WINDOW: 'WINDOW',
+  SPOTIFY: 'SPOTIFY'
+}
+
+export default ERROR_SOURCES;

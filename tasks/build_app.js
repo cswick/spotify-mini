@@ -11,13 +11,13 @@ var utils = require('./utils');
 
 var projectDir = jetpack;
 var srcDir = jetpack.cwd('./src');
-var libDir = jetpack.cwd('./src/lib');
+var helperDir = jetpack.cwd('./src/helpers');
 var destDir = jetpack.cwd('./app');
 
 gulp.task('bundle', function () {
     return Promise.all([
         bundle(srcDir.path('background.ts'), destDir.path('background.js')),
-        bundle(libDir.path('preload.ts'), destDir.path('preload.js')),
+        bundle(helperDir.path('preload.ts'), destDir.path('preload.js')),
     ]);
 });
 

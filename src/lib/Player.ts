@@ -2,16 +2,18 @@ import Spotify from './Spotify';
 import robot from 'robotjs';
 import ActionTypes from './ActionTypes';
 import BTWrapper from './BTWrapper';
+import ErrorSources from './ErrorSources';
+import handleError from '../helpers/error';
 
 declare var window;
 
 class Player implements BowtiePlayer {
 
-  constructor(theme: BowtiePlist) {
-    //document.addEventListener('click', this.handleClick, false);
+  statusInterval;
 
+  constructor(theme: BowtiePlist) {
     if (theme.BTStatusFunction) {
-      setInterval(() => {
+      this.statusInterval = setInterval(() => {
         window[theme.BTStatusFunction]();
       }, 1000);
     }
@@ -39,31 +41,10 @@ class Player implements BowtiePlayer {
         } catch(e) {}
       }
     });
-    Spotify.on('READY', () => {
-      // setInterval(() => {
-      //   console.log(Spotify.getPosition());
-      // }, 250);
+    Spotify.on(ActionTypes.ERROR, (err, reason) => {
+      clearInterval(this.statusInterval);
+      handleError(ErrorSources.SPOTIFY, { err: err, reason: reason });
     });
-  }
-
-  handleClick(e) {
-    switch (e.target.id) {
-      case 'play':
-        Spotify.play();
-        e.target.id = 'pause';
-        break;
-      case 'prev':
-        robot.keyTap('audio_prev');
-        break;
-      case 'next':
-        robot.keyTap('audio_next');
-        break;
-      case 'pause':
-        Spotify.pause();
-        e.target.id = 'play';
-        break;
-    }
-    console.log(e.target);
   }
 
   isConnected() {};

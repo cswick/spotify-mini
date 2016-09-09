@@ -1,10 +1,16 @@
-import Player from './Player';
-import Bowtie from './Bowtie';
+import Player from '../lib/Player';
+import Bowtie from '../lib/Bowtie';
 import { remote, ipcRenderer, BrowserWindow } from 'electron';
 import menu from '../menu/context-menu';
 import handleScroll from '../helpers/zoom';
+import ErrorSources from '../lib/ErrorSources';
+import handleError from './error';
 
 declare var process, global, document;
+
+process.on('uncaughtException', (...args) => {
+  handleError(ErrorSources.WINDOW, args);
+});
 
 process.once('loaded', () => {
   let themeConfig = ipcRenderer.sendSync('get-theme-settings');
@@ -24,4 +30,7 @@ process.once('loaded', () => {
       handleScroll(e);
     });
   };
+  ipcRenderer.on('error', (...args) => {
+    handleError('Unknown', args);
+  });
 });

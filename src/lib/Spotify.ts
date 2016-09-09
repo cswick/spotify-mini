@@ -26,7 +26,7 @@ class Internal {
         case ERR_AUTH_TOKEN:
           return { reason: 'bad token', err: err };
         default:
-          return { reason: 'uh', err: err };
+          return { reason: 'other', err: err };
       }
     });
   }
@@ -142,7 +142,7 @@ class Internal {
 
 }
 
-class Spotify extends EventEmitter2 {
+export class Spotify extends EventEmitter2 {
 
   status: SpotifyStatus;
   artworkUrl: string;
@@ -180,8 +180,7 @@ class Spotify extends EventEmitter2 {
 
     Internal.init().then((info: any) => {
       if (info.err) {
-        console.error(info.reason);
-        console.error(info.err);
+        this.emit(ActionTypes.ERROR, info.err, info.reason);
       } else {
         this._secrets = info;
         this._ready = true;
@@ -205,7 +204,7 @@ class Spotify extends EventEmitter2 {
       };
       pollStatus();
     }).catch((err) => {
-      console.error(err);
+      this.emit(ActionTypes.ERROR, err);
     });
 
     this.on(ActionTypes.PAUSE, () => { clearTrackPosition(); });

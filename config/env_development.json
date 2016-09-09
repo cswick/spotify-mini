@@ -6,6 +6,7 @@
     "minimizable": false,
     "maximizable": false,
     "skipTaskbar": false,
-    "titleBarStyle": "hidden"
+    "titleBarStyle": "hidden",
+    "transparent": true
   }
 }
